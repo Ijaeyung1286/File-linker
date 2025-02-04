@@ -35,4 +35,6 @@ jobs:
       - name: Run Python script with Secret
         env:
           API_KEY: ${{ secrets.BOT_KEY }}
+          LINKS_KEY: ${{ secrets.LINKS_ID }}
+          BOT_ID: ${{ secrets.BOT_ID }}
         run: python main.py

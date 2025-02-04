@@ -10,8 +10,8 @@ from telegram.ext  import (Application,
 
 TOKEN: Final = os.getenv("API_KEY")
 BOT_NAME: Final = "File_Linker_bot"
-SAVE_LINKS: Final = -1002431540662
-BOT_ID = 7660097928
+SAVE_LINKS: Final = os.getenv("LINKS_KEY")
+BOT_ID = os.getenv("BOT_ID")
 links = "http://t.me/File_Linker_bot?start="
 
 # commands

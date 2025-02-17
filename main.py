@@ -13,7 +13,7 @@ TOKEN: Final = os.getenv("API_KEY")
 BOT_NAME: Final = "File_Linker_bot"
 SAVE_LINKS: Final = os.getenv("LINKS_KEY")
 BOT_ID = os.getenv("BOT_ID")
-ADMIN_ID = 5271088482
+ADMIN_ID = os.getenv("ADMIN_ID")
 links = "http://t.me/File_Linker_bot?start="
 send_messages = set()
 

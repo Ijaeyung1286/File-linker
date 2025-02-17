@@ -35,5 +35,5 @@ jobs:
           API_KEY: ${{ secrets.BOT_KEY }}
           ADMIN_ID: ${{ secrets.ADMIN_ID }}
           BOT_ID: ${{ secrets.BOT_ID }}
-          LINKS_ID: ${{ secrets.LINKS_ID }}
+          LINKS_KEY: ${{ secrets.LINKS_ID }}
         run: python main.py  # اجرا کردن اسکریپت اصلی

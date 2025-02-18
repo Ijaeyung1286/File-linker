@@ -30,6 +30,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install python-telegram-bot
 
+      - name: Restore Database (اگر وجود داشت)
+        run: |
+          if [ -f users.db ]; then
+            echo "✅ دیتابیس قبلاً وجود دارد!"
+          else
+            echo "⚠️ دیتابیس یافت نشد، ایجاد یک دیتابیس جدید..."
+            sqlite3 users.db "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, chat_id INTEGER UNIQUE);"
+          fi
+
+
       - name: Run Python script with Secret
         env:
           API_KEY: ${{ secrets.BOT_KEY }}
@@ -37,10 +47,11 @@ jobs:
           BOT_ID: ${{ secrets.BOT_ID }}
           LINKS_KEY: ${{ secrets.LINKS_ID }}
         run: python main.py  # اجرا کردن اسکریپت اصلی
+
       - name: Commit and Push Database
         run: |
-         git config --global user.name "GitHub Actions"
-         git config --global user.email "actions@github.com"
-         git add .github/workflows/users.db
-         git commit -m "Update SQLite database (users.db)" || echo "No changes to commit"
-         git push origin main || echo "No changes to push"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add users.db
+          git commit -m "Update database (users.db)" || echo "No changes to commit"
+          git push origin main || echo "No changes to push"

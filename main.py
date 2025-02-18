@@ -1,5 +1,5 @@
 from typing import Final
-import sqlite3
+import json
 import os
 from telegram import Update, BotCommand , BotCommandScopeChat, ReplyKeyboardMarkup
 from telegram.ext  import (Application,
@@ -19,10 +19,28 @@ send_messages = set()
 
 # connect to database
 
-def connect_db():
-    conn = sqlite3.connect("users.db")
-    conn.execute("CREATE TABLE IF NOT EXISTS users (chat_id INTEGER PRIMARY KEY)")
-    return conn
+def add_chat_id(new_id):
+    try:
+        # خواندن اطلاعات قبلی از فایل
+        with open("users.json", "r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        # بررسی اگر ID قبلاً ذخیره نشده باشد، آن را اضافه کن
+        if new_id not in data["chat_id"]:
+            data["chat_id"].append(new_id)
+
+            # ذخیره تغییرات در فایل
+            with open("users.json", "w", encoding="utf-8") as file:
+                json.dump(data, file, ensure_ascii=False, indent=4)
+
+
+
+    except FileNotFoundError:
+        print("فایل JSON پیدا نشد، ایجاد یک فایل جدید...")
+        data = {"chat_id": [new_id]}
+        with open("users.json", "w", encoding="utf-8") as file:
+            json.dump(data, file, ensure_ascii=False, indent=4)
+        print(f"ID {new_id} اضافه شد.")
 
 
 # commands
@@ -30,11 +48,7 @@ async def start_command(update: Update, context:ContextTypes.DEFAULT_TYPE):
     print(update.message.chat.id)
     chat_id = update.effective_chat.id
 
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO users (chat_id) VALUES (?)", (chat_id,))
-    conn.commit()
-    conn.close()
+    add_chat_id(chat_id)
 
     if update.message.chat.id == ADMIN_ID:
         command = [BotCommand("admin", "فرستادن پیام همگانی"),
@@ -73,14 +87,12 @@ async def check_send_messages(update:Update, context:ContextTypes.DEFAULT_TYPE):
 
 async def check_users(update:Update, context:ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.id == ADMIN_ID:
-        conn = connect_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT chat_id FROM users")
-        users = cursor.fetchall()
-        conn.close()
+        with open("users.json", "r") as file:
+            data = json.load(file)
+        users = data["chat_id"]
 
         if users:
-            chat_ids = "\n".join(str(user[0]) for user in users)
+            chat_ids = "\n".join(str(user) for user in users)
             await context.bot.send_message(chat_id=ADMIN_ID, text=f"📋 لیست چت آیدی ها:\n{chat_ids}")
         else:
             await context.bot.send_message(chat_id=ADMIN_ID, text="❌ هیچ کاربری ثبت نشده است.")
@@ -88,15 +100,10 @@ async def check_users(update:Update, context:ContextTypes.DEFAULT_TYPE):
 
 async def document_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
     file = update.message
-    file_id = file.document.file_id
 
     chat_id = update.effective_chat.id
 
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO users (chat_id) VALUES (?)", (chat_id,))
-    conn.commit()
-    conn.close()
+    add_chat_id(chat_id)
 
     msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
                                                message_id=file.message_id,
@@ -110,11 +117,7 @@ async def pic_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
 
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO users (chat_id) VALUES (?)", (chat_id,))
-    conn.commit()
-    conn.close()
+    add_chat_id(chat_id)
 
     msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
                                                    message_id=file.message_id,
@@ -128,11 +131,7 @@ async def audio_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
 
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO users (chat_id) VALUES (?)", (chat_id,))
-    conn.commit()
-    conn.close()
+    add_chat_id(chat_id)
 
     msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
                                                message_id=file.message_id,
@@ -142,16 +141,10 @@ async def audio_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
 
 async def video_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
     file = update.message
-    file_id = file.video.file_id
 
     chat_id = update.effective_chat.id
 
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO users (chat_id) VALUES (?)", (chat_id,))
-    conn.commit()
-    conn.close()
-
+    add_chat_id(chat_id)
     msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
                                                message_id=file.message_id,
                                                from_chat_id=chat_id)
@@ -163,11 +156,11 @@ async def video_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
 async def message_handler(update:Update, context:ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
 
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT chat_id FROM users")
-    users = cursor.fetchall()
-    conn.close()
+    add_chat_id(chat_id)
+    with open("users.json", "r") as file:
+        data = json.load(file)
+    print(data["chat_id"])
+    users = data["chat_id"]
 
     global send_messages
 
@@ -179,11 +172,10 @@ async def message_handler(update:Update, context:ContextTypes.DEFAULT_TYPE):
         elif context.user_data.get("send_sms"):
             context.user_data["send_sms"] = False
             for user in users:
-                await context.bot.send_message(chat_id=user[0],text=text)
-                if user[0] not in send_messages:
-                    send_messages.add(user[0])
+                await context.bot.send_message(chat_id=user,text=text)
+                if user not in send_messages:
+                    send_messages.add(user)
             await check_send_messages(update,context)
-
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 from typing import Final
-import json
+import mysql.connector
 import os
 from telegram import Update, BotCommand , BotCommandScopeChat, ReplyKeyboardMarkup
 from telegram.ext  import (Application,

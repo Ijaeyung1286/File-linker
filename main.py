@@ -37,16 +37,6 @@ async def start_command(update: Update, context:ContextTypes.DEFAULT_TYPE):
     print(update.message.chat.id)
     chat_id = update.effective_chat.id
 
-    conn = connect_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(f"INSERT INTO users (chat_id) VALUE ({chat_id})")
-        conn.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ خطای MySQL: {err}")
-    finally:
-        conn.close()
-
     if update.message.chat.id == ADMIN_ID:
         command = [BotCommand("admin", "فرستادن پیام همگانی"),
                    BotCommand("check", "برسی تعداد ارسال"),
@@ -61,9 +51,14 @@ async def start_command(update: Update, context:ContextTypes.DEFAULT_TYPE):
         await context.bot.forward_message(from_chat_id=SAVE_LINKS,
                                           chat_id=chat_id,message_id=msg_id),
     else:
-        await update.message.reply_text("""hi welcome to this bot!
-just send me the file and get the file!! 
-files will send with the bot""")
+        buttons = [
+            [InlineKeyboardButton("🇮🇷 فارسی",callback_data="fa"),
+             InlineKeyboardButton("🇬🇧 English",callback_data="en")]
+        ]
+        reply_markup = InlineKeyboardMarkup(buttons)
+        global lan_msg
+        lan_msg = await update.message.reply_text("choose your language", reply_markup=reply_markup)
+
 
 async def admin_command(update:Update, context:ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -103,27 +98,28 @@ async def document_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
 
-    conn = connect_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(f"INSERT INTO users (chat_id) VALUE ({chat_id})")
-        conn.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ خطای MySQL: {err}")
-    finally:
-        conn.close()
+    if not context.user_data.get("lan"):
+        conn = connect_db()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(f"SELECT lan FROM users  WHERE chat_id={chat_id}")
+            lan = cursor.fetchall()[0]
+            context.user_data["lan"] = lan[0]
+        except mysql.connector.Error as err:
+            print(f"error caused: {err}")
+        finally:
+            conn.close()
+
 
     msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
                                                message_id=file.message_id,
                                                from_chat_id=chat_id)
 
-    await update.message.reply_text(f"""here is your link! 😊 \n{links}{msg_id.message_id}""")
 
-async def pic_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
-    file = update.message
-
-    chat_id = update.effective_chat.id
-
+    if context.user_data.get("lan") == "fa":
+        await update.message.reply_text(f"این هم از لینک شما😊!  \n{links}{msg_id.message_id}")
+    else:
+        await update.message.reply_text(f"""here is your link! 😊 \n{links}{msg_id.message_id}""")
     conn = connect_db()
     cursor = conn.cursor()
     try:
@@ -134,18 +130,68 @@ async def pic_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
     finally:
         conn.close()
 
+
+async def pic_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
+    file = update.message
+
+    chat_id = update.effective_chat.id
+    if not context.user_data.get("lan"):
+        conn = connect_db()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(f"SELECT lan FROM users  WHERE chat_id={chat_id}")
+            lan = cursor.fetchall()[0]
+            print(lan[0])
+            context.user_data["lan"] = lan[0]
+        except mysql.connector.Error as err:
+            print(f"error caused: {err}")
+        finally:
+            conn.close()
+
     msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
                                                    message_id=file.message_id,
                                                    from_chat_id=chat_id)
 
-    await update.message.reply_text(f"""here is your link! 😊 \n{links}{msg_id.message_id}""")
+    if context.user_data.get("lan") == "fa":
+        await update.message.reply_text(f"این هم از لینک شما😊!  \n{links}{msg_id.message_id}")
+    else:
+        await update.message.reply_text(f"""here is your link! 😊 \n{links}{msg_id.message_id}""")
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"INSERT INTO users (chat_id) VALUE ({chat_id})")
+        conn.commit()
+    except mysql.connector.Error as err:
+        print(f"❌ خطای MySQL: {err}")
+    finally:
+        conn.close()
 
 async def audio_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
     file = update.message
     file_id = file.audio.file_id
 
     chat_id = update.effective_chat.id
+    if not context.user_data.get("lan"):
+        conn = connect_db()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(f"SELECT lan FROM users  WHERE chat_id={chat_id}")
+            lan = cursor.fetchall()[0]
+            print(lan[0])
+            context.user_data["lan"] = lan[0]
+        except mysql.connector.Error as err:
+            print(f"error caused: {err}")
+        finally:
+            conn.close()
 
+    msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
+                                               message_id=file.message_id,
+                                               from_chat_id=chat_id)
+
+    if context.user_data.get("lan") == "fa":
+        await update.message.reply_text(f"این هم از لینک شما😊!  \n{links}{msg_id.message_id}")
+    else:
+        await update.message.reply_text(f"""here is your link! 😊 \n{links}{msg_id.message_id}""")
     conn = connect_db()
     cursor = conn.cursor()
     try:
@@ -155,12 +201,6 @@ async def audio_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
         print(f"❌ خطای MySQL: {err}")
     finally:
         conn.close()
-
-    msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
-                                               message_id=file.message_id,
-                                               from_chat_id=chat_id)
-
-    await update.message.reply_text(f"""here is your link! 😊 \n{links}{msg_id.message_id}""")
 
 async def video_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
     file = update.message
@@ -168,6 +208,27 @@ async def video_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
 
     chat_id = update.effective_chat.id
 
+    if not context.user_data.get("lan"):
+        conn = connect_db()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(f"SELECT lan FROM users  WHERE chat_id={chat_id}")
+            lan = cursor.fetchall()[0]
+            print(lan[0])
+            context.user_data["lan"] = lan[0]
+        except mysql.connector.Error as err:
+            print(f"error caused: {err}")
+        finally:
+            conn.close()
+
+    msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
+                                               message_id=file.message_id,
+                                               from_chat_id=chat_id)
+
+    if context.user_data.get("lan") == "fa":
+        await update.message.reply_text(f"این هم از لینک شما😊!  \n{links}{msg_id.message_id}")
+    else:
+        await update.message.reply_text(f"""here is your link! 😊 \n{links}{msg_id.message_id}""")
     conn = connect_db()
     cursor = conn.cursor()
     try:
@@ -177,12 +238,6 @@ async def video_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
         print(f"❌ خطای MySQL: {err}")
     finally:
         conn.close()
-
-    msg_id = await context.bot.forward_message(chat_id=SAVE_LINKS,
-                                               message_id=file.message_id,
-                                               from_chat_id=chat_id)
-
-    await update.message.reply_text(f"""here is your link! 😊 \n{links}{msg_id.message_id}""")
 
 # message handler
 
@@ -210,6 +265,60 @@ async def message_handler(update:Update, context:ContextTypes.DEFAULT_TYPE):
                     send_messages.add(user[0])
             await check_send_messages(update,context)
 
+# button handler
+
+async def button_handler(update:Update, context:ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    chat_id = update.effective_chat.id
+    await context.bot.delete_message(chat_id=chat_id,message_id=lan_msg.message_id)
+    data = query.data
+    print(data)
+    if data == "en":
+        await context.bot.send_message(text="""hi welcome to this bot!
+just send me the file and get the file!! 
+files will send with the bot""",chat_id=chat_id)
+        context.user_data["lan"] = "en"
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(f"UPDATE `users` SET lan='en'  WHERE chat_id={chat_id}")
+            conn.commit()
+        except mysql.connector.Error as err:
+            print(f"error caused: {err}")
+        finally:
+            conn.close()
+
+    elif data == "fa":
+        await context.bot.send_message(text="""سلام! به ربات فایل لینکر خوش آمدید!
+فقط کافیه فایلتون رو بفرستید تا لینک دانلود اون رو براتون ارسال کنم!
+شما میتونین فایل ها رو از طریق خود ربات دانلود کنید.""", chat_id=chat_id)
+        context.user_data["lan"] = "fa"
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(f"UPDATE `users` SET lan='fa'  WHERE chat_id={chat_id}")
+            conn.commit()
+        except mysql.connector.Error as err:
+            print(f"error caused: {err}")
+        finally:
+            conn.close()
+
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"INSERT INTO users (chat_id) VALUE ({chat_id})")
+        conn.commit()
+    except mysql.connector.Error as err:
+        print(f"❌ خطای MySQL: {err}")
+    finally:
+        conn.close()
+
+
+
+    #    cursor.execute(f"UPDATE `users` SET lan='fa'  WHERE chat_id={5271088482}")
+
 
 
 if __name__ == "__main__":
@@ -226,6 +335,7 @@ if __name__ == "__main__":
     app.add_handler(MessageHandler(filters.AUDIO, audio_handler))
     app.add_handler(MessageHandler(filters.VIDEO, video_handler))
     app.add_handler(MessageHandler(filters.TEXT, message_handler))
+    app.add_handler(CallbackQueryHandler(button_handler))
 
     print("polling...")
     app.run_polling()

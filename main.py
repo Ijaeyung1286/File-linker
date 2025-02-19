@@ -1,7 +1,12 @@
 from typing import Final
 import mysql.connector
 import os
-from telegram import Update, BotCommand , BotCommandScopeChat, ReplyKeyboardMarkup
+from telegram import (Update,
+                      BotCommand ,
+                      BotCommandScopeChat,
+                      ReplyKeyboardMarkup,
+                      InlineKeyboardButton,
+                      InlineKeyboardMarkup)
 from telegram.ext  import (Application,
                            ContextTypes,
                            CommandHandler,

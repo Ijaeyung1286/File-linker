@@ -6,7 +6,7 @@ from telegram.ext  import (Application,
                            ContextTypes,
                            CommandHandler,
                            MessageHandler,
-                           filters)
+                           filters, CallbackQueryHandler)
 
 
 TOKEN: Final = os.getenv("API_KEY")

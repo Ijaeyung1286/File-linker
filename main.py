@@ -53,7 +53,7 @@ async def start_command(update: Update, context:ContextTypes.DEFAULT_TYPE):
     if context.args:
         msg_id = context.args[0]
         chat_id = update.message.chat_id
-        await context.bot.forward_message(from_chat_id=SAVE_LINKS,
+        await context.bot.copy_message(from_chat_id=SAVE_LINKS,
                                           chat_id=chat_id,message_id=msg_id),
     else:
         buttons = [

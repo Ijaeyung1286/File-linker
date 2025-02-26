@@ -29,7 +29,8 @@ DB_CONFIG = {
     "host": os.getenv("HOST"),
     "user": os.getenv("USER"),
     "password": os.getenv("PASS"),
-    "database": os.getenv("USER")
+    "database": os.getenv("DATABASE"),
+    "port": int(os.getenv("PORT"))
 }
 
 

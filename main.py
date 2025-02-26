@@ -43,6 +43,7 @@ async def start_command(update: Update, context:ContextTypes.DEFAULT_TYPE):
     print(update.message.chat.id)
     chat_id = update.effective_chat.id
 
+
     if update.message.chat.id == ADMIN_ID:
         command = [BotCommand("admin", "فرستادن پیام همگانی"),
                    BotCommand("check", "برسی تعداد ارسال"),
@@ -62,8 +63,8 @@ async def start_command(update: Update, context:ContextTypes.DEFAULT_TYPE):
              InlineKeyboardButton("🇬🇧 English",callback_data="en")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        global lan_msg
-        lan_msg = await update.message.reply_text("choose your language", reply_markup=reply_markup)
+
+        context.user_data["lan_msg"] = await update.message.reply_text("choose your language", reply_markup=reply_markup)
 
 
 async def admin_command(update:Update, context:ContextTypes.DEFAULT_TYPE):
@@ -165,7 +166,7 @@ async def pic_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
     conn = connect_db()
     cursor = conn.cursor()
     try:
-        cursor.execute(f"INSERT INTO users (chat_id) VALUE ({chat_id})")
+        cursor.execute(f"INSERT INTO `users` (`chat_id`, `lan`) VALUES ({chat_id},'{context.user_data.get("lan")}');", )
         conn.commit()
     except mysql.connector.Error as err:
         print(f"❌ خطای MySQL: {err}")
@@ -201,7 +202,7 @@ async def audio_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
     conn = connect_db()
     cursor = conn.cursor()
     try:
-        cursor.execute(f"INSERT INTO users (chat_id) VALUE ({chat_id})")
+        cursor.execute(f"INSERT INTO `users` (`chat_id`, `lan`) VALUES ({chat_id},'{context.user_data.get("lan")}');", )
         conn.commit()
     except mysql.connector.Error as err:
         print(f"❌ خطای MySQL: {err}")
@@ -238,7 +239,7 @@ async def video_handler(update: Update, context:ContextTypes.DEFAULT_TYPE):
     conn = connect_db()
     cursor = conn.cursor()
     try:
-        cursor.execute(f"INSERT INTO users (chat_id) VALUE ({chat_id})")
+        cursor.execute(f"INSERT INTO `users` (`chat_id`, `lan`) VALUES ({chat_id},'{context.user_data.get("lan")}');", )
         conn.commit()
     except mysql.connector.Error as err:
         print(f"❌ خطای MySQL: {err}")
@@ -276,7 +277,7 @@ async def message_handler(update:Update, context:ContextTypes.DEFAULT_TYPE):
 async def button_handler(update:Update, context:ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     chat_id = update.effective_chat.id
-    await context.bot.delete_message(chat_id=chat_id,message_id=lan_msg.message_id)
+    await context.bot.delete_message(chat_id=chat_id,message_id=context.user_data.get("lan_msg").message_id)
     data = query.data
     print(data)
     if data == "en":
@@ -288,7 +289,7 @@ files will send with the bot""",chat_id=chat_id)
         conn = connect_db()
         cursor = conn.cursor()
         try:
-            cursor.execute(f"UPDATE `users` SET lan='en'  WHERE chat_id={chat_id}")
+            cursor.execute(f"INSERT INTO `users` (`chat_id`, `lan`) VALUES ({chat_id},'{"en"}');", )
             conn.commit()
         except mysql.connector.Error as err:
             print(f"error caused: {err}")
@@ -304,26 +305,12 @@ files will send with the bot""",chat_id=chat_id)
         conn = connect_db()
         cursor = conn.cursor()
         try:
-            cursor.execute(f"UPDATE `users` SET lan='fa'  WHERE chat_id={chat_id}")
+            cursor.execute(f"INSERT INTO `users` (`chat_id`, `lan`) VALUES ({chat_id},'{"fa"}');", )
             conn.commit()
         except mysql.connector.Error as err:
             print(f"error caused: {err}")
         finally:
             conn.close()
-
-    conn = connect_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(f"INSERT INTO users (chat_id) VALUE ({chat_id})")
-        conn.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ خطای MySQL: {err}")
-    finally:
-        conn.close()
-
-
-
-    #    cursor.execute(f"UPDATE `users` SET lan='fa'  WHERE chat_id={5271088482}")
 
 
 
@@ -345,3 +332,4 @@ if __name__ == "__main__":
 
     print("polling...")
     app.run_polling()
+

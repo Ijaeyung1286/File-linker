@@ -268,9 +268,12 @@ async def message_handler(update:Update, context:ContextTypes.DEFAULT_TYPE):
         elif context.user_data.get("send_sms"):
             context.user_data["send_sms"] = False
             for user in users:
-                await context.bot.send_message(chat_id=user[0],text=text)
-                if user[0] not in send_messages:
-                    send_messages.add(user[0])
+                try:
+                    await context.bot.send_message(chat_id=user[0],text=text)
+                    if user[0] not in send_messages:
+                        send_messages.add(user[0])
+                except Exception as e:
+                  await context.bot.send_message(chat_id=ADMIN_ID, text=f"پیام به این دلیل به {user[0]} ارسال نشد {e}")
             await check_send_messages(update,context)
 
 # button handler
